@@ -1,3 +1,4 @@
+import sys
 import time
 import json
 import csv
@@ -12,6 +13,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
+from pyvirtualdisplay import Display # required for firefox on Ubuntu
 
 class Site:
     URL = 'https://bwt.cbp.gov/index.html?com=1&pas=1&ped=1&plist=0708,3004,0901,0115,0712,0209,3800,0212,0106,3604,0104,3023,0109,0704,0211,0701,3401,3802,3803,3009,3310,2502,5355,2503,2406,2302,2601,2303,2402,2404,l245,2305,2304,2602,2603,2604,2506,2403,2309,2307,2310,2608,2504,2408,2505'
@@ -22,14 +24,23 @@ class Site:
     PEDESTRIAN = 10
 
 def scrape(url, elem_ids):
-    driver = webdriver.Firefox()
+    if 'darwin' not in sys.platform: # Ubuntu, requires `apt-get install xvfb`
+        display = Display(visible=0, size=(800, 600))
+        display.start()
+        # context manager example:
+        # with Display(visible=0, size=(800, 600)) as display:
+    # driver = webdriver.PhantomJS()
     # driver = webdriver.Chrome()
+    driver = webdriver.Firefox()
     driver.get(Site.URL)
     for elem in elem_ids:
         element = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.ID, elem))
         )
-    return driver.page_source
+    src = driver.page_source
+    if 'darwin' not in sys.platform:
+        display.stop()
+    return src
 
 def scrape_border_wait_times():
     data = []
@@ -114,12 +125,14 @@ def json2csv(data, csv_filepath):
 
 if __name__ == '__main__':
     wait_times, timestamp = scrape_border_wait_times()
-    # update_latest_wait_times(json.dumps(wait_times), timestamp)
-    # log_wait_times(wait_times, timestamp)
-    now = round(time.time())
-    CSV_FILE = f'./wait_times{now}.csv'
-    JSON_FILE = f'./wait_times{now}.json'
-    with open(JSON_FILE, 'w') as f:
-        # f.write(json.dumps(wait_times))
-        pprint(wait_times, stream=f)
-    json2csv(wait_times, CSV_FILE)
+    # print(wait_times)
+    # print(timestamp)
+    update_latest_wait_times(json.dumps(wait_times), timestamp)
+    log_wait_times(wait_times, timestamp)
+    # now = round(time.time())
+    # CSV_FILE = f'./wait_times{now}.csv'
+    # JSON_FILE = f'./wait_times{now}.json'
+    # with open(JSON_FILE, 'w') as f:
+    #     # f.write(json.dumps(wait_times))
+    #     pprint(wait_times, stream=f)
+    # json2csv(wait_times, CSV_FILE)
