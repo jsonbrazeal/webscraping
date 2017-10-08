@@ -1,6 +1,7 @@
 # Etc.
 wait_times*.csv
 wait_times*.json
+*.pprint
 
 # Editors
 *.sublime-*
