@@ -82,7 +82,7 @@ def get_delays(cell):
     if cell.text == 'N/A':
         return crossing_status
     elif cell.text in ('Lanes Closed', 'Update Pending'):
-        crossing_status['lane_info'] = cell.text
+        crossing_status['lane_info'] = cell.text.lower()
         return crossing_status
     elif cell.span:
         crossing_status['delay'] = cell.span.text
@@ -92,6 +92,7 @@ def get_delays(cell):
     crossing_status['current_time'] = crossing_status['current_time'].lstrip('At ')
     if '1 lanes' in crossing_status['lane_info']:
         crossing_status['lane_info'] = crossing_status['lane_info'].replace('1 lanes', '1 lane')
+    crossing_status['lane_info'] = crossing_status['lane_info'].lower()
     crossing_status['delay'] = crossing_status['delay'].replace('min', 'minute')
     return crossing_status
 
