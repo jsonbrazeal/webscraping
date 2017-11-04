@@ -26,28 +26,35 @@ class Site:
     PEDESTRIAN = 10
 
 def scrape(url, elem_ids):
-    if 'darwin' not in sys.platform: # Ubuntu, requires `apt-get install xvfb`
-        display = Display(visible=0, size=(800, 600))
-        display.start()
-        # context manager example:
-        # with Display(visible=0, size=(800, 600)) as display:
-    # driver = webdriver.PhantomJS()
-    # driver = webdriver.Chrome()
-    driver = webdriver.Firefox()
-    driver.get(Site.URL)
-    for elem in elem_ids:
-        element = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.ID, elem))
-        )
-    src = driver.page_source
-    if 'darwin' not in sys.platform:
-        display.stop()
+    try:
+        if 'darwin' not in sys.platform: # Ubuntu, requires `apt-get install xvfb`
+            display = Display(visible=0, size=(800, 600))
+            display.start()
+            # context manager example:
+            # with Display(visible=0, size=(800, 600)) as display:
+        # driver = webdriver.PhantomJS()
+        # driver = webdriver.Chrome()
+        driver = webdriver.Firefox()
+        driver.get(Site.URL)
+        for elem in elem_ids:
+            element = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.ID, elem))
+            )
+        src = driver.page_source
+        if 'darwin' not in sys.platform:
+            display.stop()
+    except Exception as e:
+        display.popen.terminate()
+        return None
     return src
+
 
 def scrape_border_wait_times():
     data = []
     timestamp = int(time.time() * 1000000)
     src = scrape(Site.URL, Site.ELEM_IDS)
+    if src is None:
+        return None, None
     soup = BeautifulSoup(src, 'html.parser')
     resultsCanadian = soup.find(id='resultsCanadian')
     resultsMexican = soup.find(id='resultsMexican')
@@ -128,6 +135,8 @@ def json2csv(data, csv_filepath):
 
 if __name__ == '__main__':
     wait_times, timestamp = scrape_border_wait_times()
+    if (wait_times is None) and (timestamp is None):
+        sys.exit(1)
     # print(wait_times)
     # print(timestamp)
     update_latest_wait_times(json.dumps(wait_times), timestamp)
