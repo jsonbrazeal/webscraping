@@ -44,7 +44,8 @@ def scrape(url, elem_ids):
         if 'darwin' not in sys.platform:
             display.stop()
     except Exception as e:
-        display.popen.terminate()
+        if 'darwin' not in sys.platform:
+            display.popen.terminate()
         return None
     return src
 
